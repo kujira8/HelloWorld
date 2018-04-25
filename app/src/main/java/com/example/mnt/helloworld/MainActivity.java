@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.TextView;
 
 public class MainActivity extends AppCompatActivity {
@@ -13,6 +14,13 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        findViewById(R.id.button).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                clickReadSDBtnEvent(v);
+            }
+        });
     }
 
     // アクションバーを表示するメソッド
@@ -50,5 +58,11 @@ public class MainActivity extends AppCompatActivity {
                 return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    // SDカード読み込み処理
+    private void clickReadSDBtnEvent(View v){
+        TextView varTextView = findViewById(R.id.textView);
+        varTextView.setText("ボタンが押されたよ");
     }
 }
