@@ -1,12 +1,23 @@
 package com.example.mnt.helloworld;
 
+import android.os.Environment;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
+import android.widget.Toast;
+
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.sql.SQLException;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -64,5 +75,50 @@ public class MainActivity extends AppCompatActivity {
     private void clickReadSDBtnEvent(View v){
         TextView varTextView = findViewById(R.id.textView);
         varTextView.setText("ボタンが押されたよ");
+        getSDData();
     }
+
+    private void getSDData(){
+       File dataDir;
+       String TAG = "READ_FILES";
+       String status = Environment.getExternalStorageState();
+       FileInputStream inputStream = null;
+       BufferedReader reader = null;
+
+       if (!status.equals(Environment.MEDIA_MOUNTED)) {
+           new AlertDialog.Builder(this).setMessage("SDカードが必要です").setPositiveButton("OK", null).show();
+       }
+
+       dataDir = new File(Environment.getExternalStorageDirectory(), this.getPackageName());
+       dataDir.mkdirs();
+
+        File[] files = dataDir.listFiles();
+        for(File f : files){
+            try {
+                inputStream = new FileInputStream(f.getPath());
+                reader = new BufferedReader(new InputStreamReader(inputStream));
+                String line;
+
+                while ((line = reader.readLine()) != null) {
+                    if(line != "") Log.d(TAG, line);
+                }
+    //        } catch (IOException e) {
+    //            e.printStackTrace();
+    //            Toast.makeText(this, "ファイルの読込みに失敗しました。\n" + e.getMessage()), Toast.LENGTH_LONG);
+    //        } catch (SQLException e) {
+    //            e.printStackTrace();
+    //            Toast.makeText(this, "ファイルの読込みに失敗しました。\n" + e.getMessage()), Toast.LENGTH_LONG);
+            } catch (Exception e) {
+                e.printStackTrace();
+    //            Toast.makeText(this, "ファイルの読込みに失敗しました。\n" + e.getMessage()), Toast.LENGTH_LONG);
+            } finally {
+                try {
+                    reader.close();
+                    inputStream.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+   }
 }
