@@ -1,6 +1,11 @@
 package com.example.mnt.helloworld;
 
+import android.Manifest;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Environment;
+import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -13,13 +18,18 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.sql.SQLException;
 
 public class MainActivity extends AppCompatActivity {
+
+    private final int REQUEST_PERMISSION = 1000;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -30,6 +40,13 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 clickReadSDBtnEvent(v);
+            }
+        });
+
+        findViewById(R.id.button2).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                clickWriteSDBtnEvent(v);
             }
         });
     }
@@ -78,6 +95,54 @@ public class MainActivity extends AppCompatActivity {
         getSDData();
     }
 
+    // SDカード書き込み処理
+    private void clickWriteSDBtnEvent(View v){
+        TextView varTextView = findViewById(R.id.textView);
+        varTextView.setText("ボタン2が押されたよ");
+
+        // Android 6, API 23以上でパーミッシンの確認
+        if (Build.VERSION.SDK_INT >= 23) {
+            checkPermission();
+        } else {
+            writeSDData();
+        }
+    }
+
+    private void writeSDData(){
+
+        TextView varTextView = findViewById(R.id.textView);
+        String str = "test";
+        String fileName = "testFile.txt";
+        String text;
+        String status = Environment.getExternalStorageState();
+
+        if(!isExternalStorageWritable()) new AlertDialog.Builder(this).setMessage("SDカードが必要です").setPositiveButton("OK", null).show();
+
+        String filePath = Environment.getExternalStorageDirectory().getPath() + "/"+fileName;
+        File file = new File(filePath);
+        file.getParentFile().mkdir();
+
+        // 現在ストレージが書き込みできるかチェック
+        if(!isExternalStorageWritable())return;
+
+        try{
+            FileOutputStream fileOutputStream = new FileOutputStream(file, true);
+            OutputStreamWriter outputStreamWriter = new OutputStreamWriter(fileOutputStream, "UTF-8");
+            BufferedWriter bw = new BufferedWriter(outputStreamWriter);
+
+            bw.write(str);
+            bw.flush();
+            bw.close();
+            outputStreamWriter.close();
+            fileOutputStream.close();
+            text = "saved";
+        } catch (Exception e) {
+            text = "error: FileOutputStream";
+            e.printStackTrace();
+        }
+        varTextView.setText(text);
+    }
+
     private void getSDData(){
        File dataDir;
        String TAG = "READ_FILES";
@@ -121,4 +186,64 @@ public class MainActivity extends AppCompatActivity {
             }
         }
    }
+
+    // Checks if external storage is available for read and write
+    public boolean isExternalStorageWritable() {
+        String state = Environment.getExternalStorageState();
+        return Environment.MEDIA_MOUNTED.equals(state);
+    }
+
+    // Checks if external storage is available to at least read
+    public boolean isExternalStorageReadable() {
+        String state = Environment.getExternalStorageState();
+        return (Environment.MEDIA_MOUNTED.equals(state) ||
+                Environment.MEDIA_MOUNTED_READ_ONLY.equals(state));
+    }
+
+    // permissionの確認
+    public void checkPermission() {
+        // 既に許可している
+        if (ActivityCompat.checkSelfPermission(this,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE) ==
+                PackageManager.PERMISSION_GRANTED){
+            writeSDData();
+        }
+        // 拒否していた場合
+        else{
+            requestLocationPermission();
+        }
+    }
+
+    // 許可を求める
+    private void requestLocationPermission() {
+        if (ActivityCompat.shouldShowRequestPermissionRationale(this,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
+            ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQUEST_PERMISSION);
+
+        } else {
+            Toast toast =
+                    Toast.makeText(this, "アプリ実行に許可が必要です", Toast.LENGTH_SHORT);
+            toast.show();
+
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE,}, REQUEST_PERMISSION);
+
+        }
+    }
+
+    // 結果の受け取り
+    @Override
+    public void onRequestPermissionsResult(
+            int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        if (requestCode == REQUEST_PERMISSION) {
+            // 使用が許可された
+            if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                writeSDData();
+            } else {
+                // それでも拒否された時の対応
+                Toast toast =
+                        Toast.makeText(this, "何もできません", Toast.LENGTH_SHORT);
+                toast.show();
+            }
+        }
+    }
 }
