@@ -27,6 +27,8 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.sql.SQLException;
 
+import static android.widget.Toast.LENGTH_LONG;
+
 public class MainActivity extends AppCompatActivity {
 
     private final int REQUEST_PERMISSION = 1000;
@@ -114,16 +116,13 @@ public class MainActivity extends AppCompatActivity {
         String str = "test";
         String fileName = "testFile.txt";
         String text;
-        String status = Environment.getExternalStorageState();
 
+        // 現在ストレージが書き込みできるかチェック
         if(!isExternalStorageWritable()) new AlertDialog.Builder(this).setMessage("SDカードが必要です").setPositiveButton("OK", null).show();
 
         String filePath = Environment.getExternalStorageDirectory().getPath() + "/"+fileName;
         File file = new File(filePath);
         file.getParentFile().mkdir();
-
-        // 現在ストレージが書き込みできるかチェック
-        if(!isExternalStorageWritable())return;
 
         try{
             FileOutputStream fileOutputStream = new FileOutputStream(file, true);
@@ -144,45 +143,41 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void getSDData(){
-       File dataDir;
-       String TAG = "READ_FILES";
-       String status = Environment.getExternalStorageState();
-       FileInputStream inputStream = null;
-       BufferedReader reader = null;
 
-       if (!status.equals(Environment.MEDIA_MOUNTED)) {
-           new AlertDialog.Builder(this).setMessage("SDカードが必要です").setPositiveButton("OK", null).show();
-       }
+        String TAG = "READ_FILES";
+        FileInputStream inputStream = null;
+        BufferedReader reader = null;
+        String fileName = "testFile.txt";
 
-       dataDir = new File(Environment.getExternalStorageDirectory(), this.getPackageName());
-       dataDir.mkdirs();
+        // 現在ストレージが読み込みできるかチェック
+        if(!isExternalStorageReadable()) new AlertDialog.Builder(this).setMessage("SDカードが必要です").setPositiveButton("OK", null).show();
 
-        File[] files = dataDir.listFiles();
-        for(File f : files){
+        String filePath = Environment.getExternalStorageDirectory().getPath() + "/"+fileName;
+
+        try {
+            inputStream = new FileInputStream(filePath);
+            reader = new BufferedReader(new InputStreamReader(inputStream));
+            String line;
+
+            while ((line = reader.readLine()) != null) {
+                if(line != "") Log.d(TAG, line);
+                TextView varTextView = findViewById(R.id.textView);
+                varTextView.setText(line);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            Toast toast = Toast.makeText(this, "ファイルの読込みに失敗しました。", Toast.LENGTH_SHORT);
+            toast.show();
+        }  catch (Exception e) {
+            e.printStackTrace();
+          Toast toast = Toast.makeText(this, "ファイルの読込みに失敗しました。", Toast.LENGTH_SHORT);
+            toast.show();
+        } finally {
             try {
-                inputStream = new FileInputStream(f.getPath());
-                reader = new BufferedReader(new InputStreamReader(inputStream));
-                String line;
-
-                while ((line = reader.readLine()) != null) {
-                    if(line != "") Log.d(TAG, line);
-                }
-    //        } catch (IOException e) {
-    //            e.printStackTrace();
-    //            Toast.makeText(this, "ファイルの読込みに失敗しました。\n" + e.getMessage()), Toast.LENGTH_LONG);
-    //        } catch (SQLException e) {
-    //            e.printStackTrace();
-    //            Toast.makeText(this, "ファイルの読込みに失敗しました。\n" + e.getMessage()), Toast.LENGTH_LONG);
-            } catch (Exception e) {
+                reader.close();
+                inputStream.close();
+            } catch (IOException e) {
                 e.printStackTrace();
-    //            Toast.makeText(this, "ファイルの読込みに失敗しました。\n" + e.getMessage()), Toast.LENGTH_LONG);
-            } finally {
-                try {
-                    reader.close();
-                    inputStream.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
             }
         }
    }
@@ -240,8 +235,7 @@ public class MainActivity extends AppCompatActivity {
                 writeSDData();
             } else {
                 // それでも拒否された時の対応
-                Toast toast =
-                        Toast.makeText(this, "何もできません", Toast.LENGTH_SHORT);
+                Toast toast = Toast.makeText(this, "何もできません", Toast.LENGTH_SHORT);
                 toast.show();
             }
         }
