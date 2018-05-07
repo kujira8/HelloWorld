@@ -39,4 +39,12 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
+    <fragment
+        android:id="@+id/fragment"
+        android:name="com.example.mnt.helloworld.MainFragment"
+        android:layout_width="383dp"
+        android:layout_height="130dp"
+        tools:layout_editor_absoluteX="4dp"
+        tools:layout_editor_absoluteY="376dp" />
+
 </android.support.constraint.ConstraintLayout>
