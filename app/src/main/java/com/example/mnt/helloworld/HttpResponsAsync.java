@@ -11,18 +11,38 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 
-public class HttpResponsAsync extends AsyncTask<String, Void, String> {
+public class HttpResponsAsync extends AsyncTask<String, Integer, String> {
+
+    private AsyncCallback asyncCallback;
+
+    public HttpResponsAsync(AsyncCallback _asyncCallback) {
+        asyncCallback = _asyncCallback;
+    }
 
     @Override
     protected void onPreExecute() {
         super.onPreExecute();
         // doInBackground前処理
+        asyncCallback.preExecute();
     }
 
     @Override
     protected void onPostExecute(String result) {
         super.onPostExecute(result);
         // doInBackground後処理
+        asyncCallback.postExecute(result);
+    }
+
+    @Override
+    protected void onProgressUpdate(Integer... _progress) {
+        super.onProgressUpdate(_progress);
+        asyncCallback.progressUpdate(_progress[0]);
+    }
+
+    @Override
+    protected void onCancelled() {
+        super.onCancelled();
+        asyncCallback.cancel();
     }
 
     @Override
@@ -82,4 +102,13 @@ public class HttpResponsAsync extends AsyncTask<String, Void, String> {
         }
         return sb.toString();
     }
+
+    // CallBack用クラス
+    public interface AsyncCallback {
+        void preExecute();
+        void postExecute(String result);
+        void progressUpdate(int progress);
+        void cancel();
+    }
+
 }
